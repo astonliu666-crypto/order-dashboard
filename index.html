@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>订单日记 · 每日订单统计</title>
+  <style>
+    :root { --ink:#17221b; --muted:#6d766f; --paper:#f5f2e9; --card:#fffdf7; --line:#ded9cc; --green:#245c43; --lime:#dff17b; --orange:#f2a65a; --red:#b84b3a; --shadow:0 14px 38px rgba(33,48,38,.09); }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family:Inter,"PingFang SC","Microsoft YaHei",sans-serif; }
+    button,input,select,textarea { font:inherit; }
+    button { cursor:pointer; }
+    .shell { max-width:1440px; margin:auto; padding:26px 32px 50px; }
+    header { display:flex; justify-content:space-between; align-items:center; margin-bottom:26px; }
+    .brand { display:flex; gap:12px; align-items:center; font-weight:850; font-size:20px; letter-spacing:-.02em; }
+    .brand-mark { width:38px; height:38px; display:grid; place-items:center; border-radius:12px; background:var(--green); color:#fff; transform:rotate(-4deg); }
+    .today { color:var(--muted); font-size:14px; }
+    .hero { background:var(--green); color:#fff; border-radius:28px; padding:34px; display:grid; grid-template-columns:1.5fr 1fr; gap:28px; box-shadow:var(--shadow); overflow:hidden; position:relative; }
+    .hero:after { content:""; position:absolute; width:260px; height:260px; border:55px solid rgba(223,241,123,.12); border-radius:50%; right:-70px; top:-100px; }
+    .eyebrow { color:var(--lime); font-weight:750; font-size:13px; letter-spacing:.12em; }
+    h1 { font-size:clamp(34px,5vw,62px); line-height:1.05; margin:12px 0 15px; letter-spacing:-.055em; max-width:720px; }
+    .hero p { color:#c9d7ce; margin:0; }
+    .hero-actions { display:flex; align-items:flex-end; justify-content:flex-end; z-index:1; }
+    .date-box { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.16); border-radius:20px; padding:18px; width:100%; max-width:300px; backdrop-filter:blur(10px); }
+    .date-box label { display:block; font-size:12px; color:#c9d7ce; margin-bottom:8px; }
+    .date-box input { width:100%; border:0; outline:0; background:#fff; border-radius:12px; padding:12px 13px; color:var(--ink); }
+    .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:16px 0 26px; }
+    .stat { background:var(--card); border:1px solid var(--line); border-radius:20px; padding:20px; }
+    .stat .label { color:var(--muted); font-size:13px; }
+    .stat strong { display:block; font-size:30px; margin-top:9px; letter-spacing:-.04em; }
+    .stat small { font-size:12px; color:var(--muted); }
+    .content { display:grid; grid-template-columns:1.25fr .75fr; gap:18px; }
+    .panel { background:var(--card); border:1px solid var(--line); border-radius:24px; box-shadow:0 10px 28px rgba(33,48,38,.05); overflow:hidden; }
+    .panel-head { padding:22px 22px 16px; display:flex; justify-content:space-between; align-items:center; gap:14px; }
+    h2 { margin:0; font-size:20px; letter-spacing:-.03em; }
+    .toolbar { display:flex; gap:9px; }
+    .search { border:1px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; width:210px; outline:none; }
+    .search:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(36,92,67,.1); }
+    select { border:1px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; outline:none; }
+    .btn { border:0; border-radius:12px; padding:11px 15px; font-weight:750; }
+    .btn-primary { background:var(--lime); color:var(--ink); }
+    .btn-dark { background:var(--green); color:#fff; }
+    .btn-ghost { background:#ece9df; color:var(--ink); }
+    .order-list { padding:0 12px 14px; max-height:600px; overflow:auto; }
+    .order { display:grid; grid-template-columns:46px 1fr auto; gap:13px; align-items:center; padding:14px 10px; border-top:1px solid #e9e4d9; transition:.18s; cursor:pointer; border-radius:14px; }
+    .order:hover,.order.active { background:#f0eee5; }
+    .avatar { width:42px; height:42px; border-radius:13px; background:#dde6df; display:grid; place-items:center; color:var(--green); font-weight:850; }
+    .order-title { font-weight:760; margin-bottom:5px; }
+    .order-meta { color:var(--muted); font-size:12px; display:flex; gap:10px; }
+    .amount { font-weight:850; text-align:right; }
+    .badge { display:inline-block; padding:5px 8px; border-radius:999px; font-size:11px; font-weight:700; margin-top:6px; }
+    .待处理 { background:#fff0cf; color:#8c5a12; } .处理中 { background:#dce8ff; color:#31558e; } .已完成 { background:#dcebdd; color:#28623b; } .已取消 { background:#f2ded9; color:#9a4134; }
+    .detail { padding:0 22px 22px; }
+    .empty { color:var(--muted); text-align:center; padding:70px 20px; }
+    .detail-card { border-top:1px solid var(--line); padding-top:20px; }
+    .detail-top { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
+    .detail-id { font-size:12px; color:var(--muted); margin-bottom:6px; }
+    .detail h3 { margin:0; font-size:24px; }
+    .price { font-size:25px; font-weight:850; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:24px 0; }
+    .field { background:#f2efe6; border-radius:14px; padding:13px; }
+    .field span { display:block; color:var(--muted); font-size:11px; margin-bottom:5px; }
+    .field b { font-size:14px; }
+    .products { border-top:1px solid var(--line); padding-top:17px; }
+    .product { display:flex; justify-content:space-between; padding:8px 0; font-size:14px; }
+    .detail-actions { display:flex; gap:9px; margin-top:20px; flex-wrap:wrap; }
+    dialog { width:min(560px,calc(100% - 30px)); border:0; border-radius:24px; padding:0; background:var(--card); box-shadow:0 25px 80px rgba(0,0,0,.25); }
+    dialog::backdrop { background:rgba(20,29,23,.55); backdrop-filter:blur(3px); }
+    .modal { padding:25px; }
+    .modal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+    .close { width:34px; height:34px; border:0; border-radius:10px; background:#ece9df; }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .form-group { display:flex; flex-direction:column; gap:7px; }
+    .form-group.full { grid-column:1/-1; }
+    .form-group label { font-size:12px; color:var(--muted); }
+    .form-group input,.form-group textarea,.form-group select { width:100%; border:1px solid var(--line); border-radius:11px; background:#fff; padding:11px; outline:none; }
+    textarea { resize:vertical; min-height:70px; }
+    .modal-foot { display:flex; justify-content:flex-end; gap:9px; margin-top:20px; }
+    .toast { position:fixed; right:25px; bottom:25px; padding:13px 18px; border-radius:12px; background:var(--ink); color:#fff; opacity:0; transform:translateY(10px); transition:.25s; pointer-events:none; }
+    .toast.show { opacity:1; transform:none; }
+    @media(max-width:900px){ .hero{grid-template-columns:1fr}.hero-actions{justify-content:flex-start}.stats{grid-template-columns:1fr 1fr}.content{grid-template-columns:1fr}.detail-panel{min-height:420px} }
+    @media(max-width:600px){ .shell{padding:18px 14px 36px}.hero{padding:25px 20px;border-radius:22px}.stats{gap:9px}.stat{padding:15px}.stat strong{font-size:24px}.panel-head{align-items:flex-start;flex-direction:column}.toolbar{width:100%;flex-wrap:wrap}.search{flex:1;min-width:150px}.form-grid{grid-template-columns:1fr}.form-group.full{grid-column:auto}.today{display:none} }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header><div class="brand"><div class="brand-mark">单</div>订单日记</div><div class="today" id="todayText"></div></header>
+    <section class="hero">
+      <div><div class="eyebrow">DAILY ORDER DESK</div><h1>今天的生意，<br>一眼就明白。</h1><p>记录每一笔订单，也看见每一天的增长。</p></div>
+      <div class="hero-actions"><div class="date-box"><label>正在查看的日期</label><input type="date" id="datePicker"></div></div>
+    </section>
+    <section class="stats">
+      <div class="stat"><div class="label">订单总量</div><strong id="totalCount">0</strong><small>笔订单</small></div>
+      <div class="stat"><div class="label">今日销售额</div><strong id="totalSales">¥0</strong><small>所选日期合计</small></div>
+      <div class="stat"><div class="label">已完成</div><strong id="completeCount">0</strong><small id="completeRate">完成率 0%</small></div>
+      <div class="stat"><div class="label">平均客单价</div><strong id="avgPrice">¥0</strong><small>每笔订单均价</small></div>
+    </section>
+    <main class="content">
+      <section class="panel">
+        <div class="panel-head"><h2>订单列表</h2><div class="toolbar"><input class="search" id="search" placeholder="搜索客户或订单号"><select id="statusFilter"><option value="">全部状态</option><option>待处理</option><option>处理中</option><option>已完成</option><option>已取消</option></select><button class="btn btn-primary" id="addBtn">＋ 新增订单</button></div></div>
+        <div class="order-list" id="orderList"></div>
+      </section>
+      <section class="panel detail-panel"><div class="panel-head"><h2>订单详情</h2></div><div class="detail" id="detail"><div class="empty">点击左侧订单<br>查看完整信息</div></div></section>
+    </main>
+  </div>
+  <dialog id="orderDialog"><form class="modal" id="orderForm"><div class="modal-head"><h2>添加新订单</h2><button type="button" class="close" id="closeDialog">×</button></div><div class="form-grid">
+    <div class="form-group"><label>客户姓名 *</label><input name="customer" required placeholder="例如：张女士"></div>
+    <div class="form-group"><label>联系电话</label><input name="phone" placeholder="138 0000 0000"></div>
+    <div class="form-group"><label>订单金额（元）*</label><input name="amount" required min="0" step="0.01" type="number" placeholder="0.00"></div>
+    <div class="form-group"><label>订单状态</label><select name="status"><option>待处理</option><option>处理中</option><option>已完成</option><option>已取消</option></select></div>
+    <div class="form-group full"><label>商品信息 *</label><input name="product" required placeholder="例如：拿铁咖啡 × 2"></div>
+    <div class="form-group full"><label>配送地址</label><input name="address" placeholder="客户收货地址"></div>
+    <div class="form-group full"><label>备注</label><textarea name="note" placeholder="口味、配送时间等特别要求"></textarea></div>
+  </div><div class="modal-foot"><button type="button" class="btn btn-ghost" id="cancelDialog">取消</button><button class="btn btn-dark" type="submit">保存订单</button></div></form></dialog>
+  <div class="toast" id="toast"></div>
+  <script>
+    const today = new Date().toISOString().slice(0,10);
+    const seed = [
+      {id:'OD-1008',date:today,time:'09:18',customer:'林先生',phone:'138 5621 8803',amount:168,status:'已完成',product:'精品咖啡礼盒 × 1',address:'上海市静安区南京西路',note:'工作日下午送达'},
+      {id:'OD-1007',date:today,time:'10:42',customer:'周女士',phone:'186 3320 1457',amount:76,status:'处理中',product:'拿铁咖啡 × 2、可颂 × 2',address:'上海市徐汇区衡山路',note:'咖啡少糖'},
+      {id:'OD-1006',date:today,time:'11:05',customer:'陈先生',phone:'159 0082 3145',amount:328,status:'待处理',product:'夏日限定套餐 × 4',address:'上海市黄浦区复兴中路',note:'需要纸质发票'},
+      {id:'OD-1005',date:today,time:'12:36',customer:'王女士',phone:'137 8890 6632',amount:52,status:'已完成',product:'抹茶蛋糕 × 1、美式咖啡 × 1',address:'到店自取',note:'无'},
+      {id:'OD-1004',date:today,time:'14:20',customer:'赵先生',phone:'177 2301 9088',amount:215,status:'已取消',product:'下午茶分享装 × 2',address:'上海市长宁区愚园路',note:'客户临时取消'}
+    ];
+    let orders = JSON.parse(localStorage.getItem('order-diary-data') || 'null') || seed;
+    let selectedId = null;
+    const $ = s => document.querySelector(s); const money = n => '¥' + Number(n).toLocaleString('zh-CN',{maximumFractionDigits:2});
+    $('#datePicker').value=today; $('#todayText').textContent=new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'}).format(new Date());
+    const save=()=>localStorage.setItem('order-diary-data',JSON.stringify(orders));
+    function filtered(){const d=$('#datePicker').value,q=$('#search').value.trim().toLowerCase(),s=$('#statusFilter').value;return orders.filter(o=>o.date===d&&(!s||o.status===s)&&(!q||(o.customer+o.id+o.product).toLowerCase().includes(q)));}
+    function render(){const dayOrders=orders.filter(o=>o.date===$('#datePicker').value), list=filtered(),total=dayOrders.reduce((n,o)=>n+Number(o.amount),0),done=dayOrders.filter(o=>o.status==='已完成').length;
+      $('#totalCount').textContent=dayOrders.length;$('#totalSales').textContent=money(total);$('#completeCount').textContent=done;$('#completeRate').textContent=`完成率 ${dayOrders.length?Math.round(done/dayOrders.length*100):0}%`;$('#avgPrice').textContent=money(dayOrders.length?total/dayOrders.length:0);
+      $('#orderList').innerHTML=list.length?list.map(o=>`<article class="order ${selectedId===o.id?'active':''}" data-id="${o.id}"><div class="avatar">${o.customer.slice(0,1)}</div><div><div class="order-title">${o.customer}</div><div class="order-meta"><span>${o.id}</span><span>${o.time}</span></div></div><div><div class="amount">${money(o.amount)}</div><span class="badge ${o.status}">${o.status}</span></div></article>`).join(''):'<div class="empty">这一天还没有符合条件的订单</div>';
+      document.querySelectorAll('.order').forEach(el=>el.onclick=()=>{selectedId=el.dataset.id;render();renderDetail();}); if(selectedId&&!orders.some(o=>o.id===selectedId)){selectedId=null;renderDetail();}
+    }
+    function renderDetail(){const o=orders.find(x=>x.id===selectedId);if(!o){$('#detail').innerHTML='<div class="empty">点击左侧订单<br>查看完整信息</div>';return;}$('#detail').innerHTML=`<div class="detail-card"><div class="detail-top"><div><div class="detail-id">${o.id} · ${o.date} ${o.time}</div><h3>${o.customer}</h3><span class="badge ${o.status}">${o.status}</span></div><div class="price">${money(o.amount)}</div></div><div class="grid"><div class="field"><span>联系电话</span><b>${o.phone||'未填写'}</b></div><div class="field"><span>配送地址</span><b>${o.address||'未填写'}</b></div><div class="field"><span>下单日期</span><b>${o.date}</b></div><div class="field"><span>下单时间</span><b>${o.time}</b></div></div><div class="products"><small style="color:var(--muted)">商品明细</small><div class="product"><b>${o.product}</b><b>${money(o.amount)}</b></div><div class="field" style="margin-top:12px"><span>订单备注</span><b>${o.note||'无'}</b></div></div><div class="detail-actions"><select id="detailStatus"><option ${o.status==='待处理'?'selected':''}>待处理</option><option ${o.status==='处理中'?'selected':''}>处理中</option><option ${o.status==='已完成'?'selected':''}>已完成</option><option ${o.status==='已取消'?'selected':''}>已取消</option></select><button class="btn btn-dark" id="saveStatus">更新状态</button><button class="btn btn-ghost" id="deleteOrder" style="color:var(--red)">删除订单</button></div></div>`;
+      $('#saveStatus').onclick=()=>{o.status=$('#detailStatus').value;save();render();renderDetail();toast('订单状态已更新');};$('#deleteOrder').onclick=()=>{if(confirm(`确定删除 ${o.id} 吗？`)){orders=orders.filter(x=>x.id!==o.id);selectedId=null;save();render();renderDetail();toast('订单已删除');}};
+    }
+    function toast(msg){$('#toast').textContent=msg;$('#toast').classList.add('show');setTimeout(()=>$('#toast').classList.remove('show'),1800);}
+    ['datePicker','search','statusFilter'].forEach(id=>$('#'+id).addEventListener(id==='search'?'input':'change',()=>{selectedId=null;render();renderDetail();}));
+    const dialog=$('#orderDialog');$('#addBtn').onclick=()=>dialog.showModal();$('#closeDialog').onclick=$('#cancelDialog').onclick=()=>dialog.close();
+    $('#orderForm').onsubmit=e=>{e.preventDefault();const f=new FormData(e.target),now=new Date(),id='OD-'+String(Math.max(1000,...orders.map(o=>Number(o.id.replace(/\D/g,''))||0))+1);orders.unshift({id,date:$('#datePicker').value,time:now.toTimeString().slice(0,5),customer:f.get('customer'),phone:f.get('phone'),amount:Number(f.get('amount')),status:f.get('status'),product:f.get('product'),address:f.get('address'),note:f.get('note')});selectedId=id;save();e.target.reset();dialog.close();render();renderDetail();toast('新订单已保存');};
+    render();
+  </script>
+</body>
+</html>
