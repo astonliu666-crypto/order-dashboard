@@ -1,0 +1,13 @@
+nav button {
+  border: 0;
+  text-align: left;
+  background: transparent;
+  padding: 13px 14px;
+  border-radius: 12px;
+  color: #c9d8cf;
+  font: inherit;
+  cursor: pointer;
+}
+nav button:hover { background: rgba(255,255,255,.07); color: #fff; }
+nav button.active { background: rgba(255,255,255,.12); color: #fff; font-weight: 700; }
+.highlight { outline: 3px solid var(--lime); outline-offset: 2px; }
